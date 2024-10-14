@@ -17,6 +17,10 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import java.util.Date
 
+/**
+ * enqueue response
+ *
+ */
 class MainActivity : AppCompatActivity() {
 
     companion object {
@@ -37,6 +41,7 @@ class MainActivity : AppCompatActivity() {
 
         val uri: Uri = Uri.parse("https://myserver.com:5051/api/v1/path?text=android&take=1#last")
 
+
         Log.d(TAG, "uri.scheme ${uri.scheme}")
         Log.d(TAG, "uri.host ${uri.host}")
         Log.d(TAG, "uri.authority ${uri.authority}")
@@ -45,7 +50,6 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "uri.queryParameterNames ${uri.queryParameterNames}")
         Log.d(TAG, "uri.getQueryParameter(\"text\") ${uri.getQueryParameter("text")}")
         Log.d(TAG, "uri.fragment ${uri.fragment}")
-
 
         val itemsRv: RecyclerView = findViewById(R.id.items)
         itemsRv.adapter = adapter
@@ -56,16 +60,20 @@ class MainActivity : AppCompatActivity() {
                 GsonConverterFactory.create(
                     GsonBuilder()
                         .registerTypeAdapter(Date::class.java, CustomDateTypeAdapter())
+                        .registerTypeAdapter(NewsItem::class.java, NewsItemTypeAdapter())
                         .create()
                 )
             )
             .build()
         val serverApi = retrofit.create(Sprint11ServerApi::class.java)
 
-        serverApi.getNews1().enqueue(object : Callback<NewsResponse> {
+        serverApi.getNews1()
+            .enqueue(object : Callback<NewsResponse> {
             override fun onResponse(call: Call<NewsResponse>, response: Response<NewsResponse>) {
                 Log.i(TAG, "onResponse: ${response.body()}")
-                adapter.items = response.body()?.data?.items ?: emptyList()
+                adapter.items = response.body()?.data?.items?.filter {
+                    it !is NewsItem.Unknown
+                } ?: emptyList()
             }
 
             override fun onFailure(call: Call<NewsResponse>, t: Throwable) {
@@ -84,6 +92,6 @@ class MainActivity : AppCompatActivity() {
 interface Sprint11ServerApi {
 
 
-    @GET("main/jsons/news_1.json")
+    @GET("main/jsons/news_2.json")
     fun getNews1(): Call<NewsResponse>
 }
